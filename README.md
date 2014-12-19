@@ -1,6 +1,6 @@
 JSONMessage.php
 ===
-[![Build Status](https://travis-ci.org/laurentszyster/JSONMessage.php.svg)](https://travis-ci.org/laurentszyster/JSONMessage.php.svg)
+[![Build Status](https://travis-ci.org/laurentszyster/JSONMessage.php.svg)](https://travis-ci.org/laurentszyster/JSONMessage.php)
 
 A convenience class to validate a PHP associative array as a typed JSON message with mandatory properties and default values.
 
