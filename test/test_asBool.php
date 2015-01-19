@@ -3,8 +3,6 @@
 require_once('deps/test-more-php/Test-More-OO.php');
 require_once('src/JSONMessage.php');
 
-class TestException extends Exception {}
-
 $data = array(
 	'string' => 'text',
 	'numeric' => '123',

@@ -3,8 +3,6 @@
 require_once('deps/test-more-php/Test-More-OO.php');
 require_once('src/JSONMessage.php');
 
-class TestException extends Exception {}
-
 $data = array(
 	'string' => 'text',
 	'numeric' => '123',
@@ -27,10 +25,10 @@ $t->is($message->encoded(), NULL, '$message->encoded() is null');
 $t->isclass_ok($message->exception('test'), 'Exception');
 $t->is($message->exception('test')->getMessage(), 'test', 'Set the exception message');
 
-$message = new JSONMessage($data, 'TestException');
-$t->isclass_ok($message->exception('test'), 'TestException');
+$message = new JSONMessage($data);
+$t->isclass_ok($message->exception('test'), 'Exception');
 
-$message = new JSONMessage($data, 'Exception', $json);
+$message = new JSONMessage($data, $json);
 $t->is($message->encoded(), $json, '$message->encoded() is '.$json);
 
 foreach(array(
@@ -43,7 +41,7 @@ foreach(array(
 	) as $json) {
 	$value = json_decode($json);
 	try {
-		$message = new JSONMessage($value, 'Exception', $json);
+		$message = new JSONMessage($value, $json);
 	} catch (Exception $e) {
 		$t->is(
 			$e->getMessage(),

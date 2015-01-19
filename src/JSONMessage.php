@@ -96,23 +96,19 @@ class JSONMessage {
      *
      */
     static function parse ($encoded) {
-        return new JSONMessage(json_decode($encoded, TRUE), 'Exception', $encoded);
+        return new JSONMessage(json_decode($encoded, TRUE), $encoded);
     }
     //
     public $map;
     private $_encoded;
-    private $_Exception;
     /**
      * Assert that $array is a map, construct a new `JSONMessage` wrapping it or.
      *
      * @param array $array a map
-     * @param string $exceptionClass name of the exception throwed by methods,
-     *        defaults to 'Exception'.
      * @param string $encoded the original encoded JSON string, defaults to NULL
      * @throws any exception with a type error
      */
-    function __construct($array, $exceptionClass='Exception', $encoded=NULL) {
-        $this->_Exception = new ReflectionClass($exceptionClass);
+    function __construct($array, $encoded=NULL) {
         if (!self::is_map($array)) {
             throw $this->exception(
                 'Type Error - not an Object: '.json_encode($array)
@@ -121,8 +117,8 @@ class JSONMessage {
         $this->map = $array;
         $this->_encoded = $encoded;
     }
-    function exception ($message) {
-    	return $this->_Exception->newInstanceArgs(array($message));
+    function exception ($message, $previous=NULL) {
+    	return new Exception($message, $previous);
     }
     function uniform () {
         return self::_uniform_map($this->map);
