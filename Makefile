@@ -1,22 +1,22 @@
 test: pull
-	php test/test_is_list.php
-	php test/test_is_map.php
-	php test/test_construct.php
-	php test/test_has.php
-	php test/test_keys_values.php
-	php test/test_getDefault.php
-	php test/test_setDefault.php
-	php test/test_getString.php
-	php test/test_getInt.php
-	php test/test_getFloat.php
-	php test/test_getBool.php
-	php test/test_getArray.php
-	php test/test_getList.php
-	php test/test_getMap.php
-	php test/test_asString.php
-	php test/test_asInt.php
-	php test/test_asFloat.php
-	php test/test_asBool.php
+	php test/is_list.php
+	php test/is_map.php
+	php test/__construct.php
+	php test/has.php
+	php test/keys_values.php
+	php test/getDefault.php
+	php test/setDefault.php
+	php test/getString.php
+	php test/getInt.php
+	php test/getFloat.php
+	php test/getBool.php
+	php test/getArray.php
+	php test/getList.php
+	php test/getMap.php
+	php test/asString.php
+	php test/asInt.php
+	php test/asFloat.php
+	php test/asBool.php
 
 pull: deps deps/test-more-php
 
