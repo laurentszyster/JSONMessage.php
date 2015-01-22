@@ -4,9 +4,18 @@ JSONMessage.php
 
 A convenience class to validate a PHP associative array as a typed JSON message with mandatory properties and default values.
 
+Requirements
+---
+- box an associative array with conveniences for JSON message validation
+- implement a uniform JSON representation to identify messages
+- provide the static functions `is_map(array)` and `is_list(array)`
+- support PHP 5.2
+
 Synopsis
 ---
 Use `JSONMessage` whenever a PHP function must validate the presence of keys, the type of values and supply defaults for an associative array.
+
+### Validation
 
 For instance in a function that validates options for an SQL query builder:
 
@@ -80,10 +89,20 @@ function queryOptions($array) {
 ?>
 ~~~
 
-Requirements
----
-The JSONMessage class must :
+### Uniform
 
-- support PHP 5.2;
-- let application provide their own exception class;
+JSONModel is also usefull when testing associative arrays, because it provides a uniform JSON representation.
 
+~~~php
+<?php
+
+$uniform = '{"a":1,"b":3,"d":4}';
+$message = new JSONMessage(array("b"=>3,"a"=>1,"d"=>4));
+$message->uniform() === $uniform;
+
+?>
+~~~
+
+Having a uniform representation also means that we can identify a message by distributed key or validate the digital signature of a message.
+
+It's too good to be left out of a JSON message class. 
