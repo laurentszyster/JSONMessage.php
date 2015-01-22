@@ -123,8 +123,23 @@ class JSONMessage {
     function uniform () {
         return self::_uniform_map($this->map);
     }
-    function encoded () {
+    function encoded ($encoded=NULL) {
+        if (is_string($encoded)) {
+            $this->_encoded = $encoded;
+        }
         return $this->_encoded;
+    }
+    function encode () {
+        return json_encode($this->map);
+    }
+    /**
+     * Return a new JSONMessage for the intersection of a map with this message.
+     *
+     * @param array $map
+     * @return JSONMessage
+     */
+    function intersect ($map) {
+        return new JSONMessage(@array_intersect_assoc($this->map, $map));
     }
     /**
      * Return TRUE if the $key exists, FALSE otherwise.
