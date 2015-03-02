@@ -4,6 +4,27 @@ if ( realpath( $_SERVER['SCRIPT_FILENAME'] ) == __FILE__ ) {
     die();
 }
 
+// shims of `json_last_error_msg`
+
+if (!function_exists('json_last_error')) {
+    function json_last_error_msg() {
+        return 'Unknown JSON error';
+    }
+} elseif (!function_exists('json_last_error_msg')) {
+    function json_last_error_msg() {
+        static $errors = array(
+            JSON_ERROR_NONE             => NULL,
+            JSON_ERROR_DEPTH            => 'Maximum stack depth exceeded',
+            JSON_ERROR_STATE_MISMATCH   => 'Underflow or the modes mismatch',
+            JSON_ERROR_CTRL_CHAR        => 'Unexpected control character found',
+            JSON_ERROR_SYNTAX           => 'Syntax error, malformed JSON',
+            JSON_ERROR_UTF8             => 'Malformed UTF-8 characters, possibly incorrectly encoded'
+        );
+        $error = json_last_error();
+        return array_key_exists($error, $errors) ? $errors[$error] : "Unknown error ({$error})";
+    }
+}
+
 /**
  * A convenience to get typed properties from an associative array, a default or fail.
  */
@@ -93,10 +114,18 @@ class JSONMessage {
         return '{'.implode(',', $encoded).'}';
     }
     /**
-     *
+     * Parse a JSON string
      */
-    static function parse ($encoded) {
-        return new JSONMessage(json_decode($encoded, TRUE), $encoded);
+    static function parse ($encoded, $depth=512) {
+        if (defined('JSON_BIGINT_AS_STRING')) {
+            $json = @json_decode($encoded, TRUE, $maxDepth, JSON_BIGINT_AS_STRING);
+        } else {
+            $json = @json_decode($encoded, TRUE);
+        }
+        if ($json === NULL) {
+            return NULL;
+        }
+        return new JSONMessage($json, $encoded);
     }
     //
     public $map;
@@ -325,10 +354,7 @@ class JSONMessage {
      * @throws any exception with a name or type error
      */
     function getMessage($key, $default=NULL) {
-        return new JSONMessage(
-            $this->getMap($key, $default),
-            $this->_Exception->getName()
-            );
+        return new JSONMessage($this->getMap($key, $default));
     }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
