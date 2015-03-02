@@ -114,9 +114,11 @@ class JSONMessage {
         return '{'.implode(',', $encoded).'}';
     }
     /**
-     * Parse a JSON string
+     * Parse a JSON string, eventually with a maximum depth and big integers
+     * as strings, return NULL if an error occured (and yes, a NULL message
+     * is another error).
      */
-    static function parse ($encoded, $depth=512) {
+    static function parse ($encoded, $maxDepth=512) {
         if (defined('JSON_BIGINT_AS_STRING')) {
             $json = @json_decode($encoded, TRUE, $maxDepth, JSON_BIGINT_AS_STRING);
         } else {
