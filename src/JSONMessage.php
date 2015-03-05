@@ -163,6 +163,13 @@ class JSONMessage {
     function encode () {
         return json_encode($this->map);
     }
+    final function __toString () {
+        $encoded = $this->encoded();
+        if ($encoded !== NULL) {
+            return $encoded;
+        }
+        return $this->encode();
+    }
     /**
      * Return a new JSONMessage for the intersection of a map with this message.
      *
