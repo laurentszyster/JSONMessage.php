@@ -28,7 +28,33 @@ if (!function_exists('json_last_error')) {
 /**
  * A convenience to get typed properties from an associative array, a default or fail.
  */
-class JSONMessage {
+class JSONMessage implements ArrayAccess {
+
+    // the associative array wrapped
+
+    public $map;
+
+    // an ArrayAccess implementation that fail fast when `offset` is not a string
+
+    public function offsetSet($offset, $value) {
+        if (is_string($offset)) {
+            $this->map[$offset] = $value;
+        }
+    }
+    public function offsetExists($offset) {
+        return (is_string($offset) && isset($this->map[$offset]));
+    }
+    public function offsetUnset($offset) {
+        if (is_string($offset)) {
+            unset($this->map[$offset]);
+        }
+    }
+    public function offsetGet($offset) {
+        return $this->offsetExists($offset) ? $this->map[$offset] : NULL;
+    }
+
+    // The JSONMessage methods
+
     /**
      * Return TRUE if $array is a list (ie: an ordered array with numeric indexes)
      *
@@ -130,7 +156,6 @@ class JSONMessage {
         return new JSONMessage($json, $encoded);
     }
     //
-    public $map;
     private $_encoded;
     /**
      * Assert that $array is a map, construct a new `JSONMessage` wrapping it or.

@@ -9,6 +9,7 @@ Requirements
 - box an associative array with conveniences for JSON message validation
 - implement a uniform JSON representation to identify messages
 - provide the static functions `is_map(array)` and `is_list(array)`
+- implement the `ArrayAccess` interface
 - support PHP 5.2
 
 Synopsis
@@ -89,9 +90,33 @@ function queryOptions($array) {
 ?>
 ~~~
 
+### Array Access
+
+Note that a `JSONMessage` is accessible as a PHP associative array.
+
+For instance :
+
+~~~php
+<?php
+
+function queryOptions($message) {
+    // mandatory values
+    $table = $message['table'];
+    $params = $message['params'];
+    // optional defaults
+    $columns = isset($message['columns']) ? $message['columns'] : NULL;
+    $offset = isset($message['offset']) ? intval($message['offset']) : 0;
+    $limit = isset($message['limit']) ? intval($message['limit']) : 30;
+    return array($table, $params, $columns, $offset, $limit);
+}
+?>
+~~~
+
+The `[]` syntax and the functions `isset`, `isempty` and `unset` can be used with a JSON message.
+
 ### Uniform
 
-JSONModel is also usefull when testing associative arrays, because it provides a uniform JSON representation.
+JSONMessage is also usefull when testing associative arrays, because it provides a uniform JSON representation.
 
 ~~~php
 <?php
@@ -104,5 +129,3 @@ $message->uniform() === $uniform;
 ~~~
 
 Having a uniform representation also means that we can identify a message by distributed key or validate the digital signature of a message.
-
-It's too good to be left out of a JSON message class. 
