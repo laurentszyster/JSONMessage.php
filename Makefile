@@ -17,6 +17,7 @@ test: pull
 	php test/asInt.php
 	php test/asFloat.php
 	php test/asBool.php
+	php test/ArrayAccess.php
 
 pull: deps deps/test-more-php
 
