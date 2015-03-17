@@ -29,6 +29,9 @@ if (!function_exists('json_last_error')) {
  * A convenience to get typed properties from an associative array, a default or fail.
  */
 class JSONMessage {
+    static private function _keys_not_in_range ($array) {
+        return count(array_diff(range(0, count($array)-1), array_keys($array)));
+    }
     /**
      * Return TRUE if $array is a list (ie: an ordered array with numeric indexes)
      *
@@ -39,9 +42,9 @@ class JSONMessage {
         if (!is_array($array)) {
             return FALSE;
         } else if (count($array) === 0) {
-        	return TRUE;
+        	return TRUE; // still ...
         }
-        return (0 === count(array_diff(range(0, count($array)-1), array_keys($array))));
+        return (JSONMessage::_keys_not_in_range($array) === 0);
     }
     /**
      * Return TRUE if $array is a map (ie: an unordered array with string indexes)
@@ -53,9 +56,9 @@ class JSONMessage {
         if (!is_array($array)) {
             return FALSE;
         } else if (count($array) === 0) {
-        	return TRUE;
+        	return TRUE; // ... ambiguous
         }
-        return (!self::is_list($array));
+        return (JSONMessage::_keys_not_in_range($array) > 0);
     }
     /**
      *
@@ -109,7 +112,7 @@ class JSONMessage {
             } else {
                 $uniform = 'null';
             }
-            array_push($encoded, json_encode($key).':'.$uniform);
+            array_push($encoded, '"'.$key.'":'.$uniform);
         }
         return '{'.implode(',', $encoded).'}';
     }
