@@ -71,7 +71,7 @@ try {
 } catch (Exception $e) {
 	$t->is(
 		$e->getMessage(),
-		'Cast Error - list must be a numeric scalar',
+		'Cast Error - list must be a scalar',
 		'JSONMessage::asFloat throws a Cast Error when the property is a list'
 		);
 }
@@ -80,7 +80,7 @@ try {
 } catch (Exception $e) {
 	$t->is(
 		$e->getMessage(),
-		'Cast Error - map must be a numeric scalar',
+		'Cast Error - map must be a scalar',
 		'JSONMessage::asFloat throws a Cast Error when the property is a map'
 		);
 }

@@ -17,7 +17,7 @@ $message = new JSONMessage($data);
 // Test Plan
 
 $t = new TestMore();
-$t->plan(10);
+$t->plan(7);
 $t->is(
 	$message->getInt('integer'), 123,
 	'JSONMessage::getInt returns the value of an existing integer property'
@@ -40,17 +40,29 @@ try {
 } catch (Exception $e) {
 	$t->is(
 		$e->getMessage(),
-		'Type Error - foobar must be an Integer',
+		'Cast Error - foobar must be numeric or boolean',
 		'JSONMessage::getInt throws a Type Error when the default provided is not an integer'
 		);
 }
-foreach(array('string', 'numeric', 'float', 'boolean', 'list', 'map') as $key) {
+foreach(array('list', 'map') as $key) {
 	try {
 		$message->getInt($key);
 	} catch (Exception $e) {
 		$t->is(
 			$e->getMessage(),
-			'Type Error - '.$key.' must be an Integer',
+			'Cast Error - '.$key.' must be a scalar',
+			'JSONMessage::getInt throws a Type Error when the property value is a '
+			.gettype($message->map[$key])
+			);
+	}
+}
+foreach(array('string', 'float') as $key) {
+	try {
+		$message->getInt($key);
+	} catch (Exception $e) {
+		$t->is(
+			$e->getMessage(),
+			'Cast Error - '.$key.' must be numeric or boolean',
 			'JSONMessage::getInt throws a Type Error when the property value is a '
 			.gettype($message->map[$key])
 			);

@@ -28,7 +28,7 @@ if (!function_exists('json_last_error')) {
 /**
  * A convenience to get typed properties from an associative array, a default or fail.
  */
-class JSONMessage implements ArrayAccess {
+class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
 
     // the associative array wrapped
 
@@ -51,6 +51,18 @@ class JSONMessage implements ArrayAccess {
     }
     public function offsetGet($offset) {
         return $this->offsetExists($offset) ? $this->map[$offset] : NULL;
+    }
+
+    // foreach($message as $key => $value)
+
+    public function getIterator () {
+        return new ArrayIterator($this->map);
+    }
+
+    // count
+
+    public function count() {
+        return count($this->map);
     }
 
     // The JSONMessage methods
@@ -164,13 +176,15 @@ class JSONMessage implements ArrayAccess {
     /**
      * Assert that $array is a map, construct a new `JSONMessage` wrapping it or.
      *
+     * Note that this boxed array is passed by reference.
+     *
      * @param array $array a map
      * @param string $encoded the original encoded JSON string, defaults to NULL
      * @throws any exception with a type error
      */
     function __construct($array, $encoded=NULL) {
-        if (!self::is_map($array)) {
-            throw $this->exception(
+        if (!JSONMessage::is_map($array)) {
+            throw new Exception(
                 'Type Error - not an Object: '.json_encode($array)
                 );
         }
@@ -244,7 +258,7 @@ class JSONMessage implements ArrayAccess {
             return $this->map[$key];
         }
         if ($default===NULL) {
-            throw $this->exception('Name Error - '.$key.' missing');
+            throw new Exception('Name Error - '.$key.' missing');
         }
         return $default;
     }
@@ -265,9 +279,15 @@ class JSONMessage implements ArrayAccess {
         $this->map[$key] = $default;
         return $default;
     }
+    private static function _asString ($value) {
+        if (is_string($value)) {
+            return $value;
+        }
+        return json_encode($value);
+    }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
-     * assert that it is a string or fail.
+     * assert that it is a string or a JSON string or fail.
      *
      * @param string $key
      * @param any $default
@@ -276,15 +296,25 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name or type error
      */
     function getString($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
+        $value = JSONMessage::_asString($this->getDefault($key, $default));
         if (!is_string($value)) {
-            throw $this->exception('Type Error - '.$key.' must be a String');
+            throw new Exception('Type Error - '.$key.' must be a String');
         }
         return $value;
     }
+    static private function _asInt ($key, $value) {
+        if (is_scalar($value)) {
+            if (is_numeric($value) || is_bool($value)) {
+                return intval($value);
+            } else {
+                throw new Exception('Cast Error - '.$key.' must be numeric or boolean');
+            }
+        }
+        throw new Exception('Cast Error - '.$key.' must be a scalar');
+    }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
-     * assert that it is an integer or fail.
+     * assert that it is an integer or an integer string or fail.
      *
      * @param string $key
      * @param any $default
@@ -293,15 +323,25 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name or type error
      */
     function getInt($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
+        $value = JSONMessage::_asInt($key, $this->getDefault($key, $default));
         if (!is_int($value)) {
-            throw $this->exception('Type Error - '.$key.' must be an Integer');
+            throw new Exception('Type Error - '.$key.' must be an Integer');
         }
         return $value;
     }
+    static private function _asFloat ($key, $value) {
+        if (is_scalar($value)) {
+            if (is_numeric($value)) {
+                return floatval($value);
+            } else {
+                throw new Exception('Cast Error - '.$key.' must be numeric');
+            }
+        }
+        throw new Exception('Cast Error - '.$key.' must be a scalar');
+    }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
-     * assert that it is a float or fail.
+     * assert that it as a float or a float string or fail.
      *
      * @param string $key
      * @param any $default
@@ -310,15 +350,25 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name or type error
      */
     function getFloat($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
+        $value = JSONMessage::_asFloat($key, $this->getDefault($key, $default));
         if (!is_float($value)) {
-            throw $this->exception('Type Error - '.$key.' must be a Float');
+            throw new Exception('Type Error - '.$key.' must be a Float');
         }
         return $value;
     }
+    static private function _asBool ($key, $value) {
+        if (is_scalar($value)) {
+            if (is_numeric($value) || is_bool($value)) {
+                return intval($value) === 1;
+            } else {
+                return strtoupper($value) === 'TRUE';
+            }
+        }
+        throw new Exception('Cast Error - '.$key.' must be a scalar');
+    }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
-     * assert that it is an boolean or fail.
+     * assert that it is castable as a boolean or fail.
      *
      * @param string $key
      * @param any $default
@@ -327,9 +377,9 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name or type error
      */
     function getBool($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
+        $value = JSONMessage::_asBool($key, $this->getDefault($key, $default));
         if (!is_bool($value)) {
-            throw $this->exception('Type Error - '.$key.' must be a Boolean');
+            throw new Exception('Type Error - '.$key.' must be a Boolean');
         }
         return $value;
     }
@@ -346,7 +396,7 @@ class JSONMessage implements ArrayAccess {
     function getArray($key, $default=NULL) {
         $value = $this->getDefault($key, $default);
         if (!is_array($value)) {
-            throw $this->exception('Type Error - '.$key.' must be an Array');
+            throw new Exception('Type Error - '.$key.' must be an Array');
         }
         return $value;
     }
@@ -362,7 +412,7 @@ class JSONMessage implements ArrayAccess {
     function getList($key, $default=NULL) {
         $value = $this->getArray($key, $default);
         if (!self::is_list($value)) {
-            throw $this->exception('Type Error - '.$key.' must be a List');
+            throw new Exception('Type Error - '.$key.' must be a List');
         }
         return $value;
     }
@@ -378,7 +428,7 @@ class JSONMessage implements ArrayAccess {
     function getMap($key, $default=NULL) {
         $value = $this->getArray($key, $default);
         if (!self::is_map($value)) {
-            throw $this->exception('Type Error - '.$key.' must be a Map');
+            throw new Exception('Type Error - '.$key.' must be a Map');
         }
         return $value;
     }
@@ -405,11 +455,7 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name error
      */
     function asString($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
-        if (is_string($value)) {
-            return $value;
-        }
-        return json_encode($value);
+        return JSONMessage::_asString($this->getDefault($key, $default));
     }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
@@ -422,15 +468,7 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name or type error
      */
     function asInt($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
-        if (is_scalar($value)) {
-            if (is_numeric($value) || is_bool($value)) {
-                return intval($value);
-            } else {
-                throw $this->exception('Cast Error - '.$key.' must be numeric or boolean');
-            }
-        }
-        throw $this->exception('Cast Error - '.$key.' must be a scalar');
+        return JSONMessage::_asInt($key, $this->getDefault($key, $default));
     }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
@@ -443,15 +481,7 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name or type error
      */
     function asFloat($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
-        if (is_scalar($value)) {
-            if (is_numeric($value)) {
-                return floatval($value);
-            } else {
-                throw $this->exception('Cast Error - '.$key.' must be numeric');
-            }
-        }
-        throw $this->exception('Cast Error - '.$key.' must be a numeric scalar');
+        return JSONMessage::_asFloat($key, $this->getDefault($key, $default));
     }
     /**
      * Get the value of $key in $this->map or a $default not NULL,
@@ -464,15 +494,7 @@ class JSONMessage implements ArrayAccess {
      * @throws any exception with a name or type error
      */
     function asBool($key, $default=NULL) {
-        $value = $this->getDefault($key, $default);
-        if (is_scalar($value)) {
-            if (is_numeric($value) || is_bool($value)) {
-                return intval($value) === 1;
-            } else {
-                return strtoupper($value) === 'TRUE';
-            }
-        }
-        throw $this->exception('Cast Error - '.$key.' must be a scalar');
+        return JSONMessage::_asBool($key, $this->getDefault($key, $default));
     }
 }
 

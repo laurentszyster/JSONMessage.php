@@ -44,7 +44,19 @@ try {
 		'JSONMessage::getBool throws a Type Error when the default provided is not an Boolean'
 		);
 }
-foreach(array('string', 'numeric', 'integer', 'float', 'list', 'map') as $key) {
+foreach(array('list', 'map') as $key) {
+	try {
+		$message->getBool($key);
+	} catch (Exception $e) {
+		$t->is(
+			$e->getMessage(),
+			'Cast Error - '.$key.' must be a scalar',
+			'JSONMessage::getInt throws a Type Error when the property value is a '
+			.gettype($message->map[$key])
+			);
+	}
+}
+foreach(array('string', 'numeric', 'integer', 'float') as $key) {
 	try {
 		$message->getBool($key);
 	} catch (Exception $e) {

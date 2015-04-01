@@ -17,7 +17,7 @@ $message = new JSONMessage($data);
 // Test Plan
 
 $t = new TestMore();
-$t->plan(10);
+$t->plan(7);
 $t->is(
 	$message->getFloat('float'), 12.3,
 	'JSONMessage::getFloat returns the value of an existing float property'
@@ -40,18 +40,30 @@ try {
 } catch (Exception $e) {
 	$t->is(
 		$e->getMessage(),
-		'Type Error - foobar must be a Float',
+		'Cast Error - foobar must be numeric',
 		'JSONMessage::getFloat throws a Type Error when the default provided is not an float'
 		);
 }
-foreach(array('string', 'numeric', 'integer', 'boolean', 'list', 'map') as $key) {
+foreach(array('list', 'map') as $key) {
 	try {
 		$message->getFloat($key);
 	} catch (Exception $e) {
 		$t->is(
 			$e->getMessage(),
-			'Type Error - '.$key.' must be a Float',
-			'JSONMessage::getFloat throws a Type Error when the property value is a '
+			'Cast Error - '.$key.' must be a scalar',
+			'JSONMessage::getInt throws a Type Error when the property value is a '
+			.gettype($message->map[$key])
+			);
+	}
+}
+foreach(array('string') as $key) {
+	try {
+		$message->getFloat($key);
+	} catch (Exception $e) {
+		$t->is(
+			$e->getMessage(),
+			'Cast Error - '.$key.' must be numeric',
+			'JSONMessage::getInt throws a Type Error when the property value is a '
 			.gettype($message->map[$key])
 			);
 	}
