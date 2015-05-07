@@ -18,6 +18,9 @@ test: pull
 	php test/asFloat.php
 	php test/asBool.php
 	php test/ArrayAccess.php
+	php test/Traversable.php
+	php test/Countable.php
+	php test/JsonSerializable.php
 
 pull: deps deps/test-more-php
 

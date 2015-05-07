@@ -7,25 +7,33 @@ A convenience class to validate a PHP associative array as a typed JSON message 
 Requirements
 ---
 - [Box an associative array with conveniences for JSON message validation](#validate-json-messages)
+- [Validate `$_GET` and `$_POST` with the same conveniences](#validate-get-and-post)
 - [Implement `ArrayAccess`, `Traversable` and `Countable`](#quack-like-an-array)
-- [Validate URL encoded forms with the same conveniences](#url-encoded-forms)
+- [Support I/O lists with a `__toString` magic method](#support_io_lists)
+- [Define a uniform JSON representation of PHP arrays](#uniform-json)
 - Support PHP 5.2, 5.3 and 5.4
 
-Also,
+### Introduction
 
-- Define a uniform JSON representation of PHP arrays
+JSON is everywhere: in the (JavaScript) web client; in HTTP requests and responses; in SQL databases; in software configuration files, etc. 
 
-Synopsis
----
-Use `JSONMessage` whenever a PHP function must validate the presence of keys, the type of values and supply defaults for an associative array.
+Eventually all those JSON messages make their way in PHP. 
+
+~~~php
+$message = JSONMessage::parse('{"foo":"bar"}');
+~~~
+
+And all PHP arrays eventually find their way out *as* JSON messages. 
+
+~~~php
+$message = new JSONMessage($_POST);
+~~~
+
+...
 
 ### Validate JSON Messages
 
-JSON is everywhere: in the (JavaScript) web client; in HTTP requests and responses; in SQL databases; in software configuration files, etc.
-
-Eventually all those JSON messages make their way in PHP.
-
-And all PHP arrays eventually find their way out as JSON messages.
+Use `JSONMessage` whenever a PHP function must validate the presence of keys, the type of values and supply defaults for an associative array.
 
 For instance in a function that validates options for an SQL query builder:
 
@@ -45,7 +53,7 @@ function queryOptions($array) {
 }
 ~~~
 
-Without the convenience of `JSONMessage`, this function would look something like this error-prone, incomplete and butt-ugly code:
+Without the convenience of `JSONMessage`, this function would look something like:
 
 ~~~php
 function queryOptions($array) {
@@ -93,6 +101,20 @@ function queryOptions($array) {
 }
 ~~~
 
+Definitively not the kind of this error-prone, incomplete and butt-ugly code you want to write nor read.
+
+### Validate `$_POST` And `$_GET`
+
+A `JSONMessage` can also be used to validate the HTTP query and URL encoded form parsed into PHP's superglobal `$_GET` and `$_POST` arrays.
+
+For instance, the function `queryOptions` can be applied on a parsed URL encoded form instead of a JSON message:
+
+~~~php
+list($table, $params, $columns, $offset, $limit) = queryOptions($_POST);
+~~~
+
+Whenever possible a boolean, float, integer or string value will be casted by the `getBool`, `getFloat`, `getInt` and `getString` methods of `JSONMessage`.
+
 ### Quack Like An Array
 
 A `JSONMessage` behaves somewhat like a PHP associative array. 
@@ -126,17 +148,23 @@ function echoJSONMessageKeys (JSONMessage $properties) {
 
 And that's where the kool-aid syntactic sugar must stop.
 
-### URL Encoded Forms
+### Support I/O Lists
 
-Validating JSON decoded messages in one use case of JSONMessage. The other is the validation of URL encoded forms as parsed into PHP's superglobal `$_GET` and `$_POST` arrays. So, whenever possible a boolean, float, integer or string value will be casted by the `getBool`, `getFloat`, `getInt` and `getString` methods of `JSONMessage`. 
+A `__toString` magic method is provided and `JSONMessage` can be used everywhere an object may be casted as a string. 
 
-For instance, this use of the queryOptions defined above will work in a script handling a parsed URL encoded form instead of a JSON message:
+For instance, this will log the JSON string of `$message` :
 
 ~~~php
-list($table, $params, $columns, $offset, $limit) = queryOptions($_POST);
+error_log($message);
 ~~~
 
-Practicality beats purity.
+And this will output a JSON list for the `$messages` :
+
+~~~php
+echo '['.implode(',',$messages).']';
+~~~
+
+Note that, if the message caches a JSON encoded string then this string will use be used to avoid re-encoding the message.
 
 ### Uniform JSON
 
@@ -149,3 +177,7 @@ $message->uniform() === $uniform;
 ~~~
 
 Having a uniform representation also means that we can identify a message by distributed key or validate the digital signature of a message.
+
+### Support PHP 5.3
+
+To support PHP 5.3 shims are provided for `json_last_error`, `json_last_error_message` and  `JsonSerializable`.

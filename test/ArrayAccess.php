@@ -12,7 +12,6 @@ $data = array(
 	'list' => array(1, 2, 3),
 	'map' => array('one' => 1, 'two' => 2, 'three' => 3)
 	);
-$json = json_encode($data);
 
 // Test Plan
 
@@ -37,4 +36,4 @@ $t->is($message->map['defined'], 'one, two, three', "offsetSet updated the state
 
 unset($message['defined']);
 
-$t->is($message->map['defined'], NULL, "offsetUnset updated the state of the message's map");
+$t->is($message->has('defined'), FALSE, "offsetUnset updated the state of the message's map");

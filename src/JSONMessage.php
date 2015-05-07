@@ -25,10 +25,16 @@ if (!function_exists('json_last_error')) {
     }
 }
 
+if (version_compare(phpversion(), '5.4.0') < 0) {
+    abstract class JsonSerializable {
+        abstract public function jsonSerialize ();
+    }
+}
+
 /**
  * A convenience to get typed properties from an associative array, a default or fail.
  */
-class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
+class JSONMessage implements ArrayAccess, IteratorAggregate, Countable, JsonSerializable {
 
     // the associative array wrapped
 
@@ -157,10 +163,14 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
     }
     /**
      * Parse a JSON string, eventually with a maximum depth and big integers
-     * as strings, return NULL if an error occured (and yes, a NULL message
-     * is another error).
+     * as strings or fail.
+     *
+     * @param string $encoded JSON to parse
+     * @param int $maxDepth defaults to 512
+     * @return JSONMessage
+     * @throws Exception eventually with the last JSON error message
      */
-    static function parse ($encoded, $maxDepth=512) {
+    final static function parse ($encoded, $maxDepth=512) {
         if (defined('JSON_BIGINT_AS_STRING')) {
             $json = @json_decode($encoded, TRUE, $maxDepth, JSON_BIGINT_AS_STRING);
         } else {
@@ -168,6 +178,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
         }
         if ($json === NULL) {
             return NULL;
+            // TODO: throw new Exception(json_last_error_msg());
         }
         return new JSONMessage($json, $encoded);
     }
@@ -180,7 +191,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      *
      * @param array $array a map
      * @param string $encoded the original encoded JSON string, defaults to NULL
-     * @throws any exception with a type error
+     * @throws Exception with a type error
      */
     function __construct($array, $encoded=NULL) {
         if (!JSONMessage::is_map($array)) {
@@ -190,6 +201,9 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
         }
         $this->map = $array;
         $this->_encoded = $encoded;
+    }
+    public function jsonSerialize () {
+        return $this->map;
     }
     function exception ($message, $previous=NULL) {
     	return new Exception($message, $previous);
@@ -207,9 +221,8 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
         return json_encode($this->map);
     }
     final function __toString () {
-        $encoded = $this->encoded();
-        if ($encoded !== NULL) {
-            return $encoded;
+        if (is_string($this->_encoded)) {
+            return $this->_encoded;
         }
         return $this->encode();
     }
@@ -251,7 +264,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return any $this->map[$key] or $default
-     * @throws any exception with a name error
+     * @throws Exception with a name error
      */
     function getDefault($key, $default=NULL) {
         if ($this->has($key)) {
@@ -282,6 +295,8 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
     private static function _asString ($value) {
         if (is_string($value)) {
             return $value;
+        } elseif (is_null($value)) {
+            return '';
         }
         return json_encode($value);
     }
@@ -293,14 +308,10 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return string $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
      */
     function getString($key, $default=NULL) {
-        $value = JSONMessage::_asString($this->getDefault($key, $default));
-        if (!is_string($value)) {
-            throw new Exception('Type Error - '.$key.' must be a String');
-        }
-        return $value;
+        return JSONMessage::_asString($this->getDefault($key, $default));
     }
     static private function _asInt ($key, $value) {
         if (is_scalar($value)) {
@@ -320,7 +331,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return int $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
      */
     function getInt($key, $default=NULL) {
         $value = JSONMessage::_asInt($key, $this->getDefault($key, $default));
@@ -391,7 +402,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return array $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
      */
     function getArray($key, $default=NULL) {
         $value = $this->getDefault($key, $default);
@@ -407,7 +418,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return array $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
      */
     function getList($key, $default=NULL) {
         $value = $this->getArray($key, $default);
@@ -423,7 +434,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return array $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
      */
     function getMap($key, $default=NULL) {
         $value = $this->getArray($key, $default);
@@ -439,7 +450,7 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return JSONMessage boxing $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
      */
     function getMessage($key, $default=NULL) {
         return new JSONMessage($this->getMap($key, $default));
@@ -452,7 +463,8 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return string $this->map[$key] or $default
-     * @throws any exception with a name error
+     * @throws Exception with a name error
+     * @deprecated
      */
     function asString($key, $default=NULL) {
         return JSONMessage::_asString($this->getDefault($key, $default));
@@ -465,7 +477,8 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return int $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
+     * @deprecated
      */
     function asInt($key, $default=NULL) {
         return JSONMessage::_asInt($key, $this->getDefault($key, $default));
@@ -478,7 +491,8 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return int $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
+     * @deprecated
      */
     function asFloat($key, $default=NULL) {
         return JSONMessage::_asFloat($key, $this->getDefault($key, $default));
@@ -491,11 +505,10 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable {
      * @param any $default
      *
      * @return int $this->map[$key] or $default
-     * @throws any exception with a name or type error
+     * @throws Exception with a name or type error
+     * @deprecated
      */
     function asBool($key, $default=NULL) {
         return JSONMessage::_asBool($key, $this->getDefault($key, $default));
     }
 }
-
-?>
