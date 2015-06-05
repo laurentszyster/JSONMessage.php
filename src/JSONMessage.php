@@ -334,11 +334,8 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable, JsonSeri
      * @throws Exception with a name or type error
      */
     function getInt($key, $default=NULL) {
-        $value = JSONMessage::_asInt($key, $this->getDefault($key, $default));
-        if (!is_int($value)) {
-            throw new Exception('Type Error - '.$key.' must be an Integer');
-        }
-        return $value;
+        $value = $this->getDefault($key, $default);
+        return ($value === '' ? $default : JSONMessage::_asInt($key, $value));
     }
     static private function _asFloat ($key, $value) {
         if (is_scalar($value)) {
@@ -361,11 +358,8 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable, JsonSeri
      * @throws any exception with a name or type error
      */
     function getFloat($key, $default=NULL) {
-        $value = JSONMessage::_asFloat($key, $this->getDefault($key, $default));
-        if (!is_float($value)) {
-            throw new Exception('Type Error - '.$key.' must be a Float');
-        }
-        return $value;
+        $value = $this->getDefault($key, $default);
+        return ($value === '' ? $default : JSONMessage::_asFloat($key, $value));
     }
     static private function _asBool ($key, $value) {
         if (is_scalar($value)) {
