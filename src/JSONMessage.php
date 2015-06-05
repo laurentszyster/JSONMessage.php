@@ -26,8 +26,8 @@ if (!function_exists('json_last_error')) {
 }
 
 if (version_compare(phpversion(), '5.4.0') < 0) {
-    abstract class JsonSerializable {
-        abstract public function jsonSerialize ();
+    interface JsonSerializable {
+        public function jsonSerialize ();
     }
 }
 
