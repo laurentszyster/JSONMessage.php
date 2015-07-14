@@ -105,9 +105,6 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable, JsonSeri
         }
         return (JSONMessage::_keys_not_in_range($array) > 0);
     }
-    /**
-     *
-     */
     private static function _uniform_list ($list) {
         $encoded = array();
         foreach($list as $value) {
@@ -130,9 +127,6 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable, JsonSeri
         }
         return '['.implode(',', $encoded).']';
     }
-    /**
-     *
-     */
     private static function _uniform_map ($map) {
         $keys = array_keys($map);
         $encoded = array();
@@ -182,6 +176,27 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable, JsonSeri
         }
         return new JSONMessage($json, $encoded);
     }
+    /**
+     * Box an associative array, an object or JSONMessage.
+     *
+     * @param mixed $message
+     * @return JSONMessage
+     * @throws Exception
+     */
+    final static function box ($message) {
+        if (is_array($message)) {
+            return new JSONMessage($message);
+        }
+        if (is_object($message)) {
+            if ($message instanceof JSONMessage) {
+                return $message;
+            }
+            return new JSONMessage(get_object_vars($message));
+        }
+        throw new Exception(
+            'Type Error - not a JSON message: '.json_encode($message)
+        );
+    }
     //
     private $_encoded;
     /**
@@ -208,15 +223,31 @@ class JSONMessage implements ArrayAccess, IteratorAggregate, Countable, JsonSeri
     function exception ($message, $previous=NULL) {
     	return new Exception($message, $previous);
     }
+    /**
+     * Return the uniformely encoded JSON string for this JSONMessage.
+     *
+     * @return string
+     */
     function uniform () {
         return self::_uniform_map($this->map);
     }
+    /**
+     * Return the original encoded JSON message.
+     *
+     * @param string $encoded
+     * @return string
+     */
     function encoded ($encoded=NULL) {
         if (is_string($encoded)) {
             $this->_encoded = $encoded;
         }
         return $this->_encoded;
     }
+    /**
+     * Encode this JSONMessage.
+     *
+     * @return string
+     */
     function encode () {
         return json_encode($this->map);
     }
